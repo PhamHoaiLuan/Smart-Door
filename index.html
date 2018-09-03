@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" type="text/css" href="main.css">
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+
+        <h1>Smart Door</h1>
+
+        <h2 id="instructor"></h2>
+
+
+        
+
+        <img id="open" src="open.PNG">
+        <img id="close" src="close.PNG">
+        <img id="loader" src="https://loading.io/spinners/double-ring/lg.double-ring-spinner.gif">
+
+        <button id="openbutton">Open Door</button>
+        <button id="closebutton">Close Door</button>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+    <script>
+        if (typeof web3 !== 'undefined') {
+            web3 = new Web3(web3.currentProvider);
+        } else {
+            // set the provider you want from Web3.providers
+            web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+        }
+        var CoursetroContract = web3.eth.contract([{"constant":true,"inputs":[],"name":"state_door","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"get_state_door","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_address","type":"address"}],"name":"set_door_owner","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"open_door","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"close_door","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_state","type":"uint256"}],"name":"state_door_set","type":"event"}]);
+        var Coursetro = CoursetroContract.at('0xcdb92da6868abc8f57f0073c47bef5f347146286');
+        $("#open").hide();
+        $("#close").hide();
+        Coursetro.get_state_door(function(error, result) {
+           if (!error) {
+               if(result == 1){
+                    $("#open").show();
+                    $("#close").hide();
+                    $("#instructor").html('Door is opened');
+                }
+                else if(result == 2){
+                    $("#open").hide();
+                    $("#close").show();
+                    $("#instructor").html('Door is closed');
+                }
+                else{
+                    $("#open").hide();
+                    $("#close").show();
+                    $("#instructor").html('Door is undefined');
+        }
+           } else
+                console.log(error);
+       });
+        
+        var instructorEvent = Coursetro.state_door_set();
+        instructorEvent.watch(function (err, result) {
+        if (!err) {
+            if(result.args._state == 1){
+            $("#instructor").html('Door is opened');
+            $("#loader").hide();
+            $("#open").show();
+            $("#close").hide();
+            }
+            else{
+            $("#instructor").html('Door is closed');
+            $("#loader").hide();
+            $("#open").hide();
+            $("#close").show();
+            }
+        } else {
+            $("#loader").hide();
+        }
+    });
+    
+    $("#openbutton").click(function() {
+    $("#loader").show();
+    
+    Coursetro.open_door((err, res) => {
+        if (err) 
+            $("#loader").hide();
+            GPIO.output(16, 1);
+});
+});
+
+    $("#closebutton").click(function() {
+    $("#loader").show();
+    
+    Coursetro.close_door((err, res) => {
+        if (err) 
+            $("#loader").hide();
+            GPIO.output(16, 0);
+});
+});
+    </script>
+
+</body>
+</html>
